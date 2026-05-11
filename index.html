@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
+  <title>Путь Сатоши</title>
+  <link rel="stylesheet" href="/src/styles/main.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body { background: #0a0f1a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; min-height: 100vh; display: flex; justify-content: center; }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <!-- Верхняя панель -->
+  <div id="top-bar">
+    <div style="width: 40px;"></div>
+    <div class="logo">🎁 ПУТЬ САТОШИ</div>
+    <div style="width: 40px;"></div>
+  </div>
+
+  <!-- Баннер с информацией -->
+  <div id="banner">
+    <div class="duck-placeholder">
+     <img src="/assets/утка анимация.jpg" alt="🦆" onerror="this.parentElement.innerHTML='🦆'">
+     </div>
+    <div class="banner-info">
+      <div class="league-badge">⚡ УЧАСТНИК ЛИГИ САТОШИ</div>
+      <div class="resources">
+        <div class="resource-item coins">
+          <span class="resource-icon">🪙</span>
+          <span id="coins-val">0</span>
+           <span style="font-size: 9px; margin-left: 2px;">сатоши</span>
+        </div>
+        <div class="resource-item level">
+          <span class="resource-icon">⭐</span>
+          <span id="level-val">1</span>
+          <span id="rank-val" class="rank-name">НОВИЧОК</span>
+        </div>
+      </div>
+      <div class="xp-bar"><div id="xp-fill" class="xp-fill" style="width:0%"></div></div>
+    </div>
+  </div>
+
+  <!-- Основная игровая область -->
+  <div id="game-area" class="tab-content active">
+    <div id="grid-container"><div id="grid"></div></div>
+    <div class="hint-box">🔗 СОЕДИНЯЙ ЖЕЛЕЗО И СТРОЙ ИМПЕРИЮ!</div>
+    <button id="create-btn" class="create-btn">СОЗДАТЬ ⚡ 50 / 5000</button>
+    <div id="energy-timer" class="energy-timer">⚡ +2 <span id="timer-val">ЧЕРЕЗ 01:00</span></div>
+    <button id="battle-btn" class="battle-btn">⚔️ БИТВА НАСМЕРТЬ ⚔️</button>
+    <div id="battle-status" class="battle-status"></div>
+    <!-- ТЕСТОВАЯ КНОПКА (удалить после тестов) -->
+ 
+  </div>
+<!-- Инфо панель (кликабельная) -->
+<div class="info-panel" id="info-panel">
+  <div class="title">📖 ПУТЬ САТОШИ — краткий гид</div>
+  <div class="content">
+    🔹 <strong>ИГРА:</strong> объединяй одинаковые предметы, чтобы создавать новые.<br>
+    🔹 <strong>ЦЕЛЬ:</strong> собрать ВСЕЛЕННУЮ (14 уровень).<br>
+    🔹 <strong>НАГРАДЫ:</strong> монеты, энергия, XP, новые ранги.<br>
+    🔹 <strong>⚔️ БИТВА НАСМЕРТЬ:</strong> PvP режим. Кто первый собрал Вселенную — выиграл раунд. Проигравший теряет ячейку. Игра до победы или сдачи. Победитель забирает 5-15% ресурсов.<br>
+    🔹 <strong>📅 АДВЕНТ:</strong> ежедневные бонусы. Заходи каждый день!<br>
+    🔹 <strong>🏆 РЕКОРДЫ:</strong> твоё лучшее время создания Вселенной.<br>
+    🔹 <strong>📊 СТАТИСТИКА:</strong> сколько всего сделано.
+  </div>
+</div>
+  <!-- Вкладка ЗАДАНИЯ -->
+  <div id="tasks-area" class="tab-content">
+    <div class="tab-header">📋 КВЕСТЫ САТОШИ</div>
+    <div class="task-list"></div>
+  </div>
+
+  <!-- Вкладка УРОВЕНЬ -->
+  <div id="level-area" class="tab-content">
+    <div class="tab-header">⭐ ТВОЙ РАНГ</div>
+    <div class="level-card">
+      <div class="level-number" id="lvl-num">1</div>
+      <div class="level-name" id="lvl-name">НОВИЧОК</div>
+      <div class="xp-bar big"><div id="lvl-xp-fill" class="xp-fill" style="width:0%"></div></div>
+      <div class="xp-text" id="lvl-xp-text">0 / 100 XP</div>
+    </div>
+  </div>
+
+  <!-- Вкладка РЕКОРДЫ -->
+  <div id="leaderboard-area" class="tab-content">
+    <div class="tab-header">🏆 ТАБЛИЦА РЕКОРДОВ</div>
+    <div class="leaderboard-best" id="lb-best">Лучший: --:--</div>
+    <div class="leaderboard-list"></div>
+    <button class="clear-btn" onclick="if(confirm('Удалить все рекорды?')) localStorage.removeItem('satoshi_records'); location.reload()">🗑️ Очистить</button>
+  </div>
+
+  <!-- Вкладка СТАТИСТИКА -->
+  <div id="stats-area" class="tab-content">
+    <div class="tab-header">📊 ГЛОБАЛЬНАЯ СТАТИСТИКА</div>
+    <div class="online-section">
+      <div class="online-title">🟢 ОНЛАЙН: <span id="online-count">1</span></div>
+      <div id="online-list" class="online-list">Вы</div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-value" id="total-merges-all">0</div><div class="stat-label">Всего объединений</div></div>
+      <div class="stat-card"><div class="stat-value" id="total-spawns-all">0</div><div class="stat-label">Создано предметов</div></div>
+      <div class="stat-card"><div class="stat-value" id="total-sells-all">0</div><div class="stat-label">Продано</div></div>
+      <div class="stat-card"><div class="stat-value" id="total-time-all">0ч</div><div class="stat-label">Времени всего</div></div>
+    </div>
+  </div>
+
+  <!-- Вкладка АДВЕНТ -->
+  <div id="advent-area" class="tab-content">
+    <div class="tab-header">📅 ХАЛВИНГ КАЛЕНДАРЬ</div>
+    <div class="advent-grid"></div>
+  </div>
+
+  <!-- Нижняя навигация -->
+  <div class="bottom-nav">
+    <div class="nav-item active" data-tab="game"><div class="nav-icon">🎮</div><span>ИГРА</span></div>
+    <div class="nav-item" data-tab="tasks"><div class="nav-icon">📋</div><span>ЗАДАНИЯ</span></div>
+    <div class="nav-item" data-tab="level"><div class="nav-icon">⭐</div><span>УРОВЕНЬ</span></div>
+    <div class="nav-item" data-tab="leaderboard"><div class="nav-icon">🏆</div><span>РЕКОРДЫ</span></div>
+    <div class="nav-item" data-tab="stats"><div class="nav-icon">📊</div><span>СТАТИСТИКА</span></div>
+    <div class="nav-item" data-tab="advent"><div class="nav-icon">📅</div><span>АДВЕНТ</span></div>
+  </div>
+
+  <!-- Панель продажи -->
+  <div id="sell-panel">
+    <img id="sell-img" src="" alt="">
+    <div class="sell-info">
+      <b id="sell-name"></b>
+      <div class="sell-energy-line">Продать за <span id="sell-energy">0</span> ⚡</div>
+      <div id="sell-next" class="sell-next"></div>
+    </div>
+    <button id="sell-btn">ПРОДАТЬ</button>
+  </div>
+
+</div>
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>
