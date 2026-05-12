@@ -4,34 +4,29 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
   <title>Путь Сатоши</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext x='50%25' y='50%25' text-anchor='middle' dy='.35em' font-size='80'%3E₿%3C/text%3E%3C/svg%3E">
   <link rel="stylesheet" href="/src/styles/main.css">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    body { background: #0a0f1a; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; min-height: 100vh; display: flex; justify-content: center; }
-  </style>
 </head>
 <body>
 <div id="app">
 
-  <!-- Верхняя панель -->
-  <div id="top-bar">
-    <div style="width: 40px;"></div>
-    <div class="logo">🎁 ПУТЬ САТОШИ</div>
-    <div style="width: 40px;"></div>
-  </div>
+  
 
-  <!-- Баннер с информацией -->
+  <!-- Баннер -->
   <div id="banner">
     <div class="duck-placeholder">
-     <img src="/assets/утка анимация.jpg" alt="🦆" onerror="this.parentElement.innerHTML='🦆'">
-     </div>
+      <img src="/assets/утка анимация.jpg" alt="🦆" onerror="this.parentElement.innerHTML='🦆'">
+    </div>
     <div class="banner-info">
-      <div class="league-badge">⚡ УЧАСТНИК ЛИГИ САТОШИ</div>
+      <div class="league-badge">
+  <span>⚡ УЧАСТНИК ЛИГИ САТОШИ</span>
+  <span class="rules-inline" id="rules-inline">📖 ПРАВИЛА</span>
+</div>
       <div class="resources">
         <div class="resource-item coins">
           <span class="resource-icon">🪙</span>
           <span id="coins-val">0</span>
-           <span style="font-size: 9px; margin-left: 2px;">сатоши</span>
+          <span class="currency-label">сатоши</span>
         </div>
         <div class="resource-item level">
           <span class="resource-icon">⭐</span>
@@ -39,34 +34,36 @@
           <span id="rank-val" class="rank-name">НОВИЧОК</span>
         </div>
       </div>
-      <div class="xp-bar"><div id="xp-fill" class="xp-fill" style="width:0%"></div></div>
+      <div class="xp-row">
+        <div class="xp-bar"><div id="xp-fill" class="xp-fill" style="width:0%"></div></div>
+        <div id="speedrun-timer" class="speedrun-timer-inline" style="display: none;"></div>
+      </div>
     </div>
   </div>
 
   <!-- Основная игровая область -->
   <div id="game-area" class="tab-content active">
     <div id="grid-container"><div id="grid"></div></div>
-    <div class="hint-box">🔗 СОЕДИНЯЙ ЖЕЛЕЗО И СТРОЙ ИМПЕРИЮ!</div>
-    <button id="create-btn" class="create-btn">СОЗДАТЬ ⚡ 50 / 5000</button>
-    <div id="energy-timer" class="energy-timer">⚡ +2 <span id="timer-val">ЧЕРЕЗ 01:00</span></div>
+    
+    <div class="hint-box" id="hint-box">📲 СОЕДИНЯЙ ЖЕЛЕЗО И СТРОЙ ИМПЕРИЮ!</div>
+    <div id="sell-panel" style="display: none;">
+      <img id="sell-img" src="" alt="">
+      <div class="sell-info">
+        <b id="sell-name"></b>
+        <span class="sell-energy-line">⚡ <span id="sell-energy">0</span></span>
+        <span id="sell-next" class="sell-next"></span>
+      </div>
+      <button id="sell-btn">ПРОДАТЬ</button>
+    </div>
+    
+    <button id="create-btn" class="create-btn">СОЗДАТЬ ⚡ 100 / 5000</button>
     <button id="battle-btn" class="battle-btn">⚔️ БИТВА НАСМЕРТЬ ⚔️</button>
     <div id="battle-status" class="battle-status"></div>
-    <!-- ТЕСТОВАЯ КНОПКА (удалить после тестов) -->
- 
+    
+    <!-- Тестовая кнопка (только для localhost) -->
+    <button id="debug-universe-btn" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9); margin: 5px 16px; padding: 8px; border-radius: 40px; color: white; font-weight: bold; border: none; display: none;">🌌 ТЕСТ: СОЗДАТЬ ВСЕЛЕННУЮ</button>
   </div>
-<!-- Инфо панель (кликабельная) -->
-<div class="info-panel" id="info-panel">
-  <div class="title">📖 ПУТЬ САТОШИ — краткий гид</div>
-  <div class="content">
-    🔹 <strong>ИГРА:</strong> объединяй одинаковые предметы, чтобы создавать новые.<br>
-    🔹 <strong>ЦЕЛЬ:</strong> собрать ВСЕЛЕННУЮ (14 уровень).<br>
-    🔹 <strong>НАГРАДЫ:</strong> монеты, энергия, XP, новые ранги.<br>
-    🔹 <strong>⚔️ БИТВА НАСМЕРТЬ:</strong> PvP режим. Кто первый собрал Вселенную — выиграл раунд. Проигравший теряет ячейку. Игра до победы или сдачи. Победитель забирает 5-15% ресурсов.<br>
-    🔹 <strong>📅 АДВЕНТ:</strong> ежедневные бонусы. Заходи каждый день!<br>
-    🔹 <strong>🏆 РЕКОРДЫ:</strong> твоё лучшее время создания Вселенной.<br>
-    🔹 <strong>📊 СТАТИСТИКА:</strong> сколько всего сделано.
-  </div>
-</div>
+
   <!-- Вкладка ЗАДАНИЯ -->
   <div id="tasks-area" class="tab-content">
     <div class="tab-header">📋 КВЕСТЫ САТОШИ</div>
@@ -87,17 +84,16 @@
   <!-- Вкладка РЕКОРДЫ -->
   <div id="leaderboard-area" class="tab-content">
     <div class="tab-header">🏆 ТАБЛИЦА РЕКОРДОВ</div>
-    <div class="leaderboard-best" id="lb-best">Лучший: --:--</div>
+    <div class="leaderboard-best" id="lb-best">🏆 Лучший: --:--</div>
     <div class="leaderboard-list"></div>
-    <button class="clear-btn" onclick="if(confirm('Удалить все рекорды?')) localStorage.removeItem('satoshi_records'); location.reload()">🗑️ Очистить</button>
   </div>
 
   <!-- Вкладка СТАТИСТИКА -->
   <div id="stats-area" class="tab-content">
     <div class="tab-header">📊 ГЛОБАЛЬНАЯ СТАТИСТИКА</div>
     <div class="online-section">
-      <div class="online-title">🟢 ОНЛАЙН: <span id="online-count">1</span></div>
-      <div id="online-list" class="online-list">Вы</div>
+      <div class="online-title">🟢 ОНЛАЙН: <span id="online-count">0</span></div>
+      <div id="online-list" class="online-list">Загрузка...</div>
     </div>
     <div class="stats-grid">
       <div class="stat-card"><div class="stat-value" id="total-merges-all">0</div><div class="stat-label">Всего объединений</div></div>
@@ -109,8 +105,12 @@
 
   <!-- Вкладка АДВЕНТ -->
   <div id="advent-area" class="tab-content">
-    <div class="tab-header">📅 ХАЛВИНГ КАЛЕНДАРЬ</div>
-    <div class="advent-grid"></div>
+  <div class="tab-header">📅 ХАЛВИНГ КАЛЕНДАРЬ</div>
+  <div class="advent-grid"></div>
+  <div class="advent-timer-container">
+    <div class="advent-timer-label">⏰ До следующего бонуса:</div>
+    <div class="advent-timer" id="advent-timer">24:00:00</div>
+  </div>
   </div>
 
   <!-- Нижняя навигация -->
@@ -121,17 +121,6 @@
     <div class="nav-item" data-tab="leaderboard"><div class="nav-icon">🏆</div><span>РЕКОРДЫ</span></div>
     <div class="nav-item" data-tab="stats"><div class="nav-icon">📊</div><span>СТАТИСТИКА</span></div>
     <div class="nav-item" data-tab="advent"><div class="nav-icon">📅</div><span>АДВЕНТ</span></div>
-  </div>
-
-  <!-- Панель продажи -->
-  <div id="sell-panel">
-    <img id="sell-img" src="" alt="">
-    <div class="sell-info">
-      <b id="sell-name"></b>
-      <div class="sell-energy-line">Продать за <span id="sell-energy">0</span> ⚡</div>
-      <div id="sell-next" class="sell-next"></div>
-    </div>
-    <button id="sell-btn">ПРОДАТЬ</button>
   </div>
 
 </div>

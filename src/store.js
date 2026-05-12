@@ -1,6 +1,28 @@
 import { MAX_ENERGY, START_ENERGY, LOCKED_START, DAILY_TASKS, ADVENT_REWARDS, CELL_REQUIREMENTS, ALL_ITEMS } from './config.js';
 
-// ============= НАЧАЛЬНОЕ СОСТОЯНИЕ =============
+// Красивое модальное окно для адвента
+function showAdventModal(message) {
+  // Удаляем старое окно, если есть
+  const oldModal = document.querySelector('.advent-modal');
+  if (oldModal) oldModal.remove();
+  const oldOverlay = document.querySelector('.advent-overlay');
+  if (oldOverlay) oldOverlay.remove();
+  
+  const overlay = document.createElement('div');
+  overlay.className = 'advent-overlay';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.8);z-index:1999;';
+  document.body.appendChild(overlay);
+  
+  const modal = document.createElement('div');
+  modal.className = 'advent-modal';
+  modal.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:linear-gradient(135deg,#1e3c72,#0f2a5a);padding:24px;border-radius:24px;z-index:2000;max-width:300px;text-align:center;box-shadow:0 10px 40px rgba(0,0,0,0.5);border:2px solid #f7931a;';
+  modal.innerHTML = `
+    <h3 style="color:#f7931a;margin-bottom:15px;font-size:20px;">📅 ХАЛВИНГ КАЛЕНДАРЬ</h3>
+    <p style="margin-bottom:20px;font-size:14px;line-height:1.4;">${message}</p>
+    <button style="background:linear-gradient(135deg,#f7931a,#ffbc42);border:none;padding:10px 24px;border-radius:30px;font-weight:bold;cursor:pointer;color:#1a1a2e;" onclick="this.closest('.advent-modal')?.remove(); document.querySelector('.advent-overlay')?.remove()">ХОРОШО</button>
+  `;
+  document.body.appendChild(modal);
+}
 const defaultState = {
   energy: START_ENERGY,
   coins: 1500,
@@ -13,6 +35,7 @@ const defaultState = {
   tasks: DAILY_TASKS.map(t => ({ ...t, progress: 0, claimed: false })),
   adventDay: 1,
   lastAdventClaim: null,
+  lastAdventClaimTime: null,
   stats: { 
     merges: 0, 
     sells: 0, 
@@ -32,25 +55,21 @@ const defaultState = {
 
 let state = { ...defaultState };
 
-// ============= GETTERS / SETTERS =============
 export const getState = () => state;
 
 export const updateState = (patch) => {
   Object.assign(state, patch);
   saveProgress();
   
-  // При изменении mergedItems проверяем разблокировку ячеек
   if (patch.stats?.mergedItems) {
     checkCellUnlocks();
   }
   
-  // Автоматическая синхронизация статистики
   if (patch.stats || patch.coins !== undefined || patch.energy !== undefined) {
     syncStatsToGlobal();
   }
 };
 
-// ============= СОХРАНЕНИЕ =============
 export const saveProgress = () => {
   try {
     const now = Date.now();
@@ -68,6 +87,7 @@ export const saveProgress = () => {
       board: state.board.map(cell => cell ? { id: cell.id, img: cell.img, name: cell.name } : null),
       adventDay: state.adventDay,
       lastAdventClaim: state.lastAdventClaim,
+      lastAdventClaimTime: state.lastAdventClaimTime,
       stats: state.stats,
       tasks: state.tasks,
       speedrunBest: state.speedrunBest,
@@ -89,6 +109,7 @@ export const loadProgress = () => {
       state.unlockedCells = p.unlockedCells ?? defaultState.unlockedCells;
       state.adventDay = p.adventDay ?? 1;
       state.lastAdventClaim = p.lastAdventClaim ?? null;
+      state.lastAdventClaimTime = p.lastAdventClaimTime ?? null;
       state.stats = { ...defaultState.stats, ...(p.stats || {}) };
       state.stats.sessionStartTime = Date.now();
       state.tasks = defaultState.tasks.map((def, i) => ({ ...def, ...(p.tasks?.[i] || {}), rewards: def.rewards }));
@@ -106,7 +127,6 @@ export const loadProgress = () => {
     }
   } catch(e) { console.warn('Load error:', e); }
   
-  // Проверка ежедневного сброса
   const today = new Date().toDateString();
   if (state.stats.lastDailyReset !== today) {
     state.tasks.forEach(t => { t.progress = 0; t.claimed = false; });
@@ -115,7 +135,6 @@ export const loadProgress = () => {
   }
 };
 
-// ============= СИНХРОНИЗАЦИЯ СТАТИСТИКИ =============
 let syncTimeout = null;
 function syncStatsToGlobal() {
   if (syncTimeout) clearTimeout(syncTimeout);
@@ -134,10 +153,8 @@ function syncStatsToGlobal() {
   }, 1000);
 }
 
-// ============= РАЗБЛОКИРОВКА ЯЧЕЕК =============
 export const checkCellUnlocks = () => {
   let newUnlocks = 0;
-  const unlockedBefore = state.unlockedCells.length;
   
   for (const [idxStr, req] of Object.entries(CELL_REQUIREMENTS)) {
     const idx = parseInt(idxStr);
@@ -155,7 +172,7 @@ export const checkCellUnlocks = () => {
       if (unlocked) {
         state.unlockedCells.push(idx);
         newUnlocks++;
-        console.log(`🔓 Ячейка #${idx} разблокирована! (${req.text})`);
+        console.log(`🔓 Ячейка #${idx} разблокирована!`);
       }
     }
   }
@@ -163,13 +180,10 @@ export const checkCellUnlocks = () => {
   if (newUnlocks > 0) {
     state.unlockedCount = state.unlockedCells.filter(i => i >= LOCKED_START).length;
     updateState({ unlockedCells: state.unlockedCells, unlockedCount: state.unlockedCount });
-    
-    // Обновляем прогресс задания на разблокировку
     updateTaskProgress('unlock', newUnlocks);
   }
 };
 
-// ============= СБРОС ИГРЫ =============
 export const resetGame = () => {
   const newBoard = [...state.board];
   for (let i = 0; i < 4 && i < state.unlockedCells.length; i++) {
@@ -180,7 +194,6 @@ export const resetGame = () => {
   updateState({ board: newBoard, isGameOver: false, speedrunStart: null });
 };
 
-// ============= XP И УРОВНИ =============
 export const addXP = (amount) => {
   let newXp = state.xp + amount;
   let newLevel = state.level;
@@ -201,7 +214,6 @@ export const addXP = (amount) => {
   updateState({ xp: newXp, level: newLevel, xpToNext: newXpToNext });
   updateTaskProgress('level');
   
-  // При повышении уровня проверяем разблокировку ячеек
   if (leveled) {
     checkCellUnlocks();
   }
@@ -209,7 +221,6 @@ export const addXP = (amount) => {
   return leveled;
 };
 
-// ============= ЗАДАНИЯ =============
 export const updateTaskProgress = (type, value = 1, targetId = null) => {
   let changed = false;
   state.tasks.forEach(task => {
@@ -231,9 +242,7 @@ export const updateTaskProgress = (type, value = 1, targetId = null) => {
           task.progress = task.target;
           changed = true;
         }
-      } else if (type === 'speedrun') {
-        // Проверяется отдельно при завершении скоррана
-      } else if (!['level', 'coins', 'merge_id', 'unlock', 'speedrun'].includes(type)) {
+      } else if (!['level', 'coins', 'merge_id', 'unlock'].includes(type)) {
         const newProg = Math.min(task.progress + value, task.target);
         if (newProg !== task.progress) {
           task.progress = newProg;
@@ -260,39 +269,101 @@ export const claimTaskReward = (taskId) => {
 };
 
 export const claimAdventReward = () => {
-  const now = new Date().toDateString();
-  if (state.lastAdventClaim === now) return null;
+  const now = Date.now();
+  const todayStart = new Date();
+  todayStart.setHours(0, 0, 0, 0);
+  const todayStartTime = todayStart.getTime();
+  
+  // Проверка — получал ли уже сегодня
+  if (state.lastAdventClaimTime && state.lastAdventClaimTime >= todayStartTime) {
+    const remaining = 24 * 60 * 60 * 1000 - (now - state.lastAdventClaimTime);
+    const hours = Math.floor(remaining / (3600000));
+    const minutes = Math.floor((remaining % 3600000) / 60000);
+    const seconds = Math.floor((remaining % 60000) / 1000);
+    showAdventModal(`⏰ Следующий бонус через<br>${hours}ч ${minutes}м ${seconds}с!`);
+    return null;
+  }
   
   const reward = ADVENT_REWARDS[(state.adventDay - 1) % ADVENT_REWARDS.length];
-  state.lastAdventClaim = now;
+  if (!reward) return null;
   
+  // Проверка свободных ячеек
+  const freeCells = state.board.filter((c, i) => c === null && state.unlockedCells.includes(i)).length;
+  const neededCells = (reward.type === 'item' && reward.count) || 
+                      (reward.type === 'bonus_item' && 1) || 
+                      (reward.type === 'special' && 1) || 0;
+  
+  if (neededCells > freeCells) {
+  showAdventModal(`❌ Нужно освободить ${neededCells} ячеек!<br>Продай или объедини предметы.`);
+  return null;
+  }
+  
+  // Сохраняем время получения
+  state.lastAdventClaimTime = now;
+  
+  // === ВЫДАЧА НАГРАДЫ ===
   if (reward.type === 'energy') {
     state.energy = Math.min(state.energy + reward.amount, MAX_ENERGY);
   }
   if (reward.type === 'xp') {
     addXP(reward.amount);
   }
+  if (reward.type === 'all') {
+    state.coins += reward.coins;
+    state.energy = Math.min(state.energy + reward.energy, MAX_ENERGY);
+    addXP(reward.xp);
+  }
   if (reward.type === 'item') {
-    const free = state.board.findIndex((c, i) => c === null && state.unlockedCells.includes(i));
-    if (free !== -1) {
-      const item = ALL_ITEMS.find(i => i.id === reward.id);
-      if (item) state.board[free] = item;
+    for (let i = 0; i < reward.count; i++) {
+      const free = state.board.findIndex((c, idx) => c === null && state.unlockedCells.includes(idx));
+      if (free !== -1) {
+        const item = ALL_ITEMS.find(it => it.id === reward.id);
+        if (item) state.board[free] = item;
+      }
     }
   }
+  if (reward.type === 'bonus_item') {
+    const bonusId = Math.floor(Math.random() * 10) + 16;
+    const bonusItem = ALL_ITEMS.find(it => it.id === bonusId);
+    const free = state.board.findIndex((c, idx) => c === null && state.unlockedCells.includes(idx));
+    if (free !== -1 && bonusItem) state.board[free] = bonusItem;
+  }
+  if (reward.type === 'special') {
+    const bitcoinItem = ALL_ITEMS.find(it => it.id === 11);
+    const free = state.board.findIndex((c, idx) => c === null && state.unlockedCells.includes(idx));
+    if (free !== -1 && bitcoinItem) state.board[free] = bitcoinItem;
+  }
   
+  // Переход к следующему дню (по кругу)
   state.adventDay = (state.adventDay % 7) + 1;
+  
   updateTaskProgress('daily_claim');
   updateState({
     energy: state.energy,
+    coins: state.coins,
+    xp: state.xp,
+    level: state.level,
+    xpToNext: state.xpToNext,
     adventDay: state.adventDay,
-    lastAdventClaim: now,
+    lastAdventClaimTime: now,
     board: state.board
   });
   
   return reward;
 };
 
-// ============= СКОРРАН (СПИДРАН) =============
+export const getPlayerId = () => {
+  if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
+    return String(window.Telegram.WebApp.initDataUnsafe.user.id);
+  }
+  let id = localStorage.getItem('player_id');
+  if (!id) {
+    id = 'player_' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem('player_id', id);
+  }
+  return id;
+};
+
 export const startSpeedrun = () => {
   if (!state.speedrunStart) {
     state.speedrunStart = Date.now();
@@ -306,8 +377,16 @@ export const stopSpeedrun = () => {
   if (!state.speedrunStart) return null;
   
   const elapsed = Date.now() - state.speedrunStart;
-  const displayTime = formatTime(elapsed);
   state.speedrunStart = null;
+  
+  let playerName = 'Игрок';
+  if (window.Telegram?.WebApp?.initDataUnsafe?.user?.username) {
+    playerName = window.Telegram.WebApp.initDataUnsafe.user.username;
+  } else if (window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name) {
+    playerName = window.Telegram.WebApp.initDataUnsafe.user.first_name;
+  } else {
+    playerName = localStorage.getItem('player_name') || 'Игрок';
+  }
   
   const isBest = !state.speedrunBest || elapsed < state.speedrunBest;
   if (isBest) {
@@ -316,21 +395,19 @@ export const stopSpeedrun = () => {
   
   const records = JSON.parse(localStorage.getItem('satoshi_records') || '[]');
   records.push({
-    date: new Date().toISOString(),
+    playerId: getPlayerId(),
+    playerName: playerName,
     time: elapsed,
     level: state.level,
-    coins: state.coins,
-    displayTime: displayTime
+    date: new Date().toISOString()
   });
+  
   records.sort((a, b) => a.time - b.time);
   localStorage.setItem('satoshi_records', JSON.stringify(records.slice(0, 50)));
   
   updateState({ speedrunStart: null, speedrunBest: state.speedrunBest });
   
-  // Обновляем задание на скорран (если есть)
-  updateTaskProgress('speedrun', 1);
-  
-  return { elapsed, displayTime, isBest };
+  return { elapsed, isBest };
 };
 
 export const getSpeedrunTime = () => {
@@ -346,10 +423,3 @@ export const clearRecords = () => {
   localStorage.removeItem('satoshi_records');
   updateState({ speedrunBest: null });
 };
-
-function formatTime(ms) {
-  const m = Math.floor(ms / 60000);
-  const s = Math.floor((ms % 60000) / 1000);
-  const ms2 = Math.floor((ms % 1000) / 10);
-  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}.${String(ms2).padStart(2, '0')}`;
-}

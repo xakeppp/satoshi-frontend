@@ -1,8 +1,8 @@
-import { getState, updateState, resetGame, addXP, loadProgress, claimTaskReward, claimAdventReward, updateTaskProgress, getRecords, clearRecords, startSpeedrun, stopSpeedrun } from './store.js';
+import { getState, updateState, resetGame, addXP, loadProgress, claimTaskReward, claimAdventReward, updateTaskProgress, getRecords, startSpeedrun, stopSpeedrun, getPlayerId } from './store.js';
 import { ALL_ITEMS, LOCKED_START, MERGE_XP, CELL_REQUIREMENTS, ADVENT_REWARDS, MAX_ENERGY, SPAWN_COST, getRandomItemId } from './config.js';
 import { t, loadLanguage, updateTexts } from './i18n.js';
 import { initTelegram, playHaptic } from './api/telegram.js';
-import { connectBattleWebSocket, sendBattleMessage, getPlayerId, getPlayerName, getOnlinePlayers, getTotalStats, getGlobalLeaderboard, savePlayerStats } from './api/leaderboardApi.js';
+import { connectBattleWebSocket, sendBattleMessage, getPlayerName, getOnlinePlayers, getTotalStats, savePlayerStats } from './api/leaderboardApi.js';
 import { initDragDrop } from './logic/dragdrop.js';
 import { tryMerge, tryMergeBonus } from './logic/merge.js';
 import { startRegenTimer, spendEnergy } from './logic/energy.js';
@@ -10,7 +10,6 @@ import { renderGrid } from './ui/grid.js';
 import { updateHeader } from './ui/header.js';
 import { initSellPanel } from './ui/sellPanel.js';
 
-// ============= ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ =============
 let battleActive = false;
 let currentBattleId = null;
 let opponentName = '';
@@ -18,20 +17,20 @@ let opponentId = '';
 let opponentMerges = 0;
 let myMergesInBattle = 0;
 
-// ============= ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =============
+function formatTimeForDisplay(ms) {
+  if (!ms || ms === 0) return '00:00.00';
+  const totalSeconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  const milliseconds = Math.floor((ms % 1000) / 10);
+  return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}.${String(milliseconds).padStart(2, '0')}`;
+}
+
 function formatTimeShort(seconds) {
   if (seconds < 60) return `${seconds} сек`;
   if (seconds < 3600) return `${Math.floor(seconds / 60)} мин ${seconds % 60} сек`;
   if (seconds < 86400) return `${Math.floor(seconds / 3600)} ч ${Math.floor((seconds % 3600) / 60)} мин`;
   return `${Math.floor(seconds / 86400)} д ${Math.floor((seconds % 86400) / 3600)} ч`;
-}
-
-function formatTimeMs(ms) {
-  if (!ms) return '--:--';
-  const m = Math.floor(ms / 60000);
-  const s = Math.floor((ms % 60000) / 1000);
-  const ms2 = Math.floor((ms % 1000) / 10);
-  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}.${String(ms2).padStart(2, '0')}`;
 }
 
 function showRewardModal(rewards) {
@@ -47,32 +46,23 @@ function showRewardModal(rewards) {
   setTimeout(() => modal.remove(), 3000);
 }
 
-// ============= СТАТИСТИКА UI (ОБНОВЛЯЕТСЯ ПРАВИЛЬНО) =============
 async function updateStatsUI() {
   const state = getState();
   const onlinePlayers = await getOnlinePlayers();
-  const totalStats = await getTotalStats();
-  
-  // Своя статистика из store.js
   const myMerges = state.stats.merges || 0;
   const mySpawns = Object.values(state.stats.spawns || {}).reduce((a, b) => a + (typeof b === 'number' ? b : 0), 0);
   const mySells = state.stats.sells || 0;
   const myTime = Math.floor((Date.now() - (state.stats.sessionStartTime || Date.now())) / 1000) + (state.stats.totalPlayTime || 0);
   
-  // Обновляем счётчики в DOM
   const mergesEl = document.getElementById('total-merges-all');
   if (mergesEl) mergesEl.textContent = myMerges;
-  
   const spawnsEl = document.getElementById('total-spawns-all');
   if (spawnsEl) spawnsEl.textContent = mySpawns;
-  
   const sellsEl = document.getElementById('total-sells-all');
   if (sellsEl) sellsEl.textContent = mySells;
-  
   const timeEl = document.getElementById('total-time-all');
   if (timeEl) timeEl.textContent = formatTimeShort(myTime);
   
-  // Онлайн список
   const onlineListEl = document.getElementById('online-list');
   if (onlineListEl) {
     if (!onlinePlayers || onlinePlayers.length === 0) {
@@ -87,60 +77,50 @@ async function updateStatsUI() {
       `).join('');
     }
   }
-  
-  // Онлайн счётчик
   const onlineCountEl = document.getElementById('online-count');
   if (onlineCountEl) onlineCountEl.textContent = onlinePlayers?.length || 1;
-  
-  // Сохраняем на сервер
-  savePlayerStats({
-    totalMerges: myMerges,
-    totalSpawns: mySpawns,
-    totalSells: mySells,
-    totalTime: Math.floor((Date.now() - state.stats.sessionStartTime) / 1000)
-  });
 }
 
-// ============= ЛИДЕРБОРД UI =============
 async function updateLeaderboardUI() {
-  const state = getState();
-  const globalRecords = await getGlobalLeaderboard();
   const list = document.querySelector('.leaderboard-list');
   if (!list) return;
-  
+  const records = getRecords();
+  const sortedRecords = [...records].sort((a, b) => (a.time || 999999) - (b.time || 999999)).slice(0, 10);
   const bestEl = document.getElementById('lb-best');
-  if (bestEl && state.speedrunBest) {
-    bestEl.textContent = `Лучший: ${formatTimeMs(state.speedrunBest)}`;
+  if (bestEl && sortedRecords.length > 0) {
+    bestEl.textContent = `🏆 Лучший: ${formatTimeForDisplay(sortedRecords[0].time)}`;
+  } else if (bestEl) {
+    bestEl.textContent = '🏆 Лучший: --:--';
   }
-  
-  if (!globalRecords || globalRecords.length === 0) {
-    list.innerHTML = '<div class="leaderboard-empty">Пока нет рекордов</div>';
+  if (sortedRecords.length === 0) {
+    list.innerHTML = '<div class="leaderboard-empty">🎯 Создай Вселенную!</div>';
     return;
   }
-  
-  list.innerHTML = globalRecords.slice(0, 10).map((rec, i) => `
-    <div class="leaderboard-item ${i === 0 ? 'first' : i === 1 ? 'second' : i === 2 ? 'third' : ''}">
-      <div class="lb-rank">${i + 1}</div>
-      <div class="lb-name">${rec.username || 'Аноним'}</div>
-      <div class="lb-time">${formatTimeMs(rec.best_speedrun)}</div>
-      <div class="lb-stats">📦${rec.total_merges || 0}</div>
-    </div>
-  `).join('');
+  const tg = window.Telegram?.WebApp?.initDataUnsafe?.user;
+  const myName = tg?.username || tg?.first_name || 'Игрок';
+  list.innerHTML = sortedRecords.map((rec, i) => {
+    const isMe = rec.playerName === myName;
+    return `
+      <div class="leaderboard-item ${i === 0 ? 'first' : i === 1 ? 'second' : i === 2 ? 'third' : ''} ${isMe ? 'current-player' : ''}">
+        <div class="lb-rank">${i + 1}</div>
+        <div class="lb-name">${isMe ? '👤 ' : ''}${rec.playerName || 'Игрок'}</div>
+        <div class="lb-time">${formatTimeForDisplay(rec.time)}</div>
+        <div class="lb-stats">📦${rec.level || 0}</div>
+      </div>
+    `;
+  }).join('');
 }
 
-// ============= ЗАДАНИЯ UI =============
 function updateTasksUI() {
   const list = document.querySelector('.task-list');
   if (!list) return;
   const state = getState();
-  
   list.innerHTML = state.tasks.map(task => {
-    const r = task.rewards || { coins: 0, energy: 0, xp: 0 };
+    const r = task.rewards || {};
     const rewardText = [];
     if (r.coins) rewardText.push(`+${r.coins}🪙`);
     if (r.energy) rewardText.push(`+${r.energy}⚡`);
     if (r.xp) rewardText.push(`+${r.xp}XP`);
-    
     return `
       <div class="task-item ${task.claimed ? 'completed' : ''}">
         <div class="task-icon">📋</div>
@@ -156,7 +136,6 @@ function updateTasksUI() {
       </div>
     `;
   }).join('');
-  
   document.querySelectorAll('.task-claim-btn').forEach(btn => {
     btn.addEventListener('click', (e) => {
       const taskId = parseInt(btn.dataset.taskId);
@@ -165,8 +144,6 @@ function updateTasksUI() {
         snd.volume = 0.3;
         snd.play().catch(() => {});
         playHaptic('success');
-        const task = getState().tasks.find(t => t.id === taskId);
-        if (task) showRewardModal(task.rewards);
         updateTasksUI();
         updateHeader();
         updateStatsUI();
@@ -175,12 +152,10 @@ function updateTasksUI() {
   });
 }
 
-// ============= АДВЕНТ UI =============
 function updateAdventUI() {
   const grid = document.querySelector('.advent-grid');
   if (!grid) return;
   const state = getState();
-  
   grid.innerHTML = ADVENT_REWARDS.map((r, i) => {
     const dayNum = i + 1;
     const isClaimed = state.lastAdventClaim === new Date().toDateString();
@@ -190,7 +165,6 @@ function updateAdventUI() {
       <div class="advent-name">${r.name}</div>
     </div>`;
   }).join('');
-  
   grid.querySelectorAll('.advent-day.active').forEach(el => {
     el.addEventListener('click', () => {
       const reward = claimAdventReward();
@@ -209,11 +183,9 @@ function updateAdventUI() {
   });
 }
 
-// ============= БИТВА UI =============
 function updateBattleUI() {
   const battleBtn = document.getElementById('battle-btn');
   const battleStatus = document.getElementById('battle-status');
-  
   if (battleActive) {
     document.body.classList.add('battle-mode-active');
     if (battleBtn) battleBtn.textContent = '🏳️ СДАТЬСЯ';
@@ -235,10 +207,7 @@ function handleBattleMessage(data) {
   switch(data.type) {
     case 'waiting':
       const status = document.getElementById('battle-status');
-      if (status) {
-        status.innerHTML = '⏳ Поиск соперника...';
-        status.classList.add('active');
-      }
+      if (status) { status.innerHTML = '⏳ Поиск соперника...'; status.classList.add('active'); }
       break;
     case 'battle_start':
       battleActive = true;
@@ -267,87 +236,58 @@ function handleBattleMessage(data) {
 
 function findBattle() {
   const status = document.getElementById('battle-status');
-  if (status) {
-    status.innerHTML = '🔍 Поиск соперника...';
-    status.classList.add('active');
-  }
+  if (status) { status.innerHTML = '🔍 Поиск соперника...'; status.classList.add('active'); }
   sendBattleMessage({ type: 'join', playerId: getPlayerId(), playerName: getPlayerName() });
 }
 
-// ============= СЛИЯНИЕ (ОБНОВЛЯЕТ СТАТИСТИКУ) =============
 function handleMerge(src, tgt) {
   const state = getState();
   const s = state.board[src];
   const t = state.board[tgt];
-  
   if (!s || !t) return false;
-  
-  // === ПРАВИЛЬНЫЙ СЧЁТЧИК: +1 за каждое слияние ===
   if (!state.stats.mergedItems) state.stats.mergedItems = {};
   state.stats.mergedItems[s.id] = (state.stats.mergedItems[s.id] || 0) + 1;
-  state.stats.merges = (state.stats.merges || 0) + 1;  // +1, а не +id предмета!
-  
+  state.stats.merges = (state.stats.merges || 0) + 1;
   updateState({ stats: state.stats });
-  
   updateTaskProgress('merge', 1);
   updateTaskProgress('merge_id', 1, s.id);
-  
-  // Пробуем слияние
   let result = tryMerge(src, tgt);
   if (!result.success && s.id >= 16) result = tryMergeBonus(src, tgt);
-  
   if (result.success) {
     const sndMerge = new Audio('/assets/merge.mp3');
     sndMerge.volume = 0.3;
     sndMerge.play().catch(() => {});
     playHaptic('medium');
-    
     if (result.isBonusMerge) {
       const newEnergy = Math.min(state.energy + (result.energyReward || 0), MAX_ENERGY);
-      updateState({ 
-        board: result.newBoard, 
-        coins: state.coins + (result.coinReward || 0),
-        energy: newEnergy,
-        stats: state.stats 
-      });
+      updateState({ board: result.newBoard, coins: state.coins + (result.coinReward || 0), energy: newEnergy, stats: state.stats });
       addXP(result.xpReward || 0);
     } else {
       addXP(result.xpReward || 0);
       const energyBonus = result.energyReward || 0;
       const newEnergy = energyBonus > 0 ? Math.min(state.energy + energyBonus, MAX_ENERGY) : state.energy;
-      updateState({ 
-        board: result.newBoard, 
-        coins: state.coins + result.coinReward, 
-        energy: newEnergy, 
-        stats: state.stats 
-      });
+      updateState({ board: result.newBoard, coins: state.coins + result.coinReward, energy: newEnergy, stats: state.stats });
     }
-    
-    // Битва: увеличиваем счётчик
     if (battleActive) {
       myMergesInBattle++;
       sendBattleMessage({ type: 'battle_move', battleId: currentBattleId, move: { nextId: result.nextId } });
       updateBattleUI();
     }
-    
     onUpdate();
     return true;
   }
   return false;
 }
 
-// ============= ПЕРЕМЕЩЕНИЕ =============
 function handleMove(src) {
   const state = getState();
   const item = state.board[src];
   if (!item) return;
-  
   const free = [];
   for (let i = 0; i < state.board.length; i++) {
     if (state.board[i] === null && state.unlockedCells.includes(i)) free.push(i);
   }
   if (free.length === 0) return;
-  
   const fromRow = Math.floor(src / 5);
   const fromCol = src % 5;
   let best = free[0];
@@ -358,7 +298,6 @@ function handleMove(src) {
     const d = Math.abs(row - fromRow) + Math.abs(col - fromCol);
     if (d < minD) { minD = d; best = idx; }
   });
-  
   const newBoard = [...state.board];
   newBoard[best] = item;
   newBoard[src] = null;
@@ -366,7 +305,6 @@ function handleMove(src) {
   onUpdate();
 }
 
-// ============= ОБНОВЛЕНИЕ ВСЕГО UI =============
 function onUpdate() {
   renderGrid();
   updateHeader();
@@ -377,10 +315,8 @@ function onUpdate() {
   updateTexts();
 }
 
-// ============= ИНИЦИАЛИЗАЦИЯ =============
 window.addEventListener('DOMContentLoaded', () => {
   console.log('🚀 Игра загружается...');
-  
   loadLanguage();
   updateTexts();
   loadProgress();
@@ -389,16 +325,29 @@ window.addEventListener('DOMContentLoaded', () => {
   startRegenTimer(onUpdate);
   initSellPanel();
   connectBattleWebSocket(handleBattleMessage);
-  
-  // Звуки
-  const sndClick = new Audio('/assets/click.mp3');
-  sndClick.volume = 0.3;
-  function playSound(type) { if (type === 'click') { sndClick.currentTime = 0; sndClick.play().catch(() => {}); } }
-  
-  // Первый рендер
   onUpdate();
   
-  // === ТАБЫ ===
+  // Правила в верхней панели
+  const rulesHeader = document.getElementById('rules-inline');
+  if (rulesHeader) {
+    rulesHeader.addEventListener('click', () => {
+      const overlay = document.createElement('div'); overlay.className = 'overlay'; document.body.appendChild(overlay);
+      const modal = document.createElement('div'); modal.className = 'unlock-hint';
+      modal.innerHTML = `
+        <h3>📖 ПРАВИЛА ИГРЫ</h3>
+        <p>🔹 <strong>ИГРА:</strong> объединяй одинаковые предметы.<br>
+        🔹 <strong>ЦЕЛЬ:</strong> собрать ВСЕЛЕННУЮ (уровень 14).<br>
+        🔹 <strong>НАГРАДЫ:</strong> монеты, энергия, XP.<br>
+        🔹 <strong>⚔️ БИТВА:</strong> PvP режим — кто быстрее соберёт Вселенную.<br>
+        🔹 <strong>📅 АДВЕНТ:</strong> ежедневные бонусы.<br>
+        🔹 <strong>🏆 РЕКОРДЫ:</strong> лучшее время создания Вселенной.</p>
+        <button onclick="this.closest('.unlock-hint')?.remove(); document.querySelector('.overlay')?.remove()">ХОРОШО</button>
+      `;
+      document.body.appendChild(modal);
+    });
+  }
+  
+  // Табы
   document.querySelectorAll('.nav-item').forEach(item => {
     item.addEventListener('click', () => {
       const tab = item.dataset.tab;
@@ -410,13 +359,12 @@ window.addEventListener('DOMContentLoaded', () => {
       item.classList.add('active');
       const target = document.getElementById(tab + '-area');
       if (target) { target.classList.add('active'); target.style.display = 'flex'; }
-      playSound('click');
       if (tab === 'stats') updateStatsUI();
       if (tab === 'leaderboard') updateLeaderboardUI();
     });
   });
   
-  // === КНОПКА СОЗДАТЬ ===
+  // Кнопка СОЗДАТЬ
   const createBtn = document.getElementById('create-btn');
   if (createBtn) {
     createBtn.addEventListener('click', () => {
@@ -424,28 +372,23 @@ window.addEventListener('DOMContentLoaded', () => {
       const free = state.board.findIndex((c, i) => c === null && state.unlockedCells.includes(i));
       if (free === -1) { alert('Нет свободных ячеек!'); return; }
       if (!spendEnergy()) { alert('Не хватает энергии!'); return; }
-      
       const id = getRandomItemId();
       const item = ALL_ITEMS.find(i => i.id === id);
-      
-      // === ПРАВИЛЬНЫЙ СЧЁТЧИК: +1 за создание ===
       if (!state.stats.spawns) state.stats.spawns = {};
       state.stats.spawns[id] = (state.stats.spawns[id] || 0) + 1;
-      
       updateState({ stats: state.stats });
       updateTaskProgress('spawn', 1);
-      updateTaskProgress('coins');
-      
       const newBoard = [...state.board];
       newBoard[free] = item;
       updateState({ board: newBoard });
-      
-      playSound('click');
+      const snd = new Audio('/assets/click.mp3');
+      snd.volume = 0.3;
+      snd.play().catch(() => {});
       onUpdate();
     });
   }
   
-  // === КНОПКА БИТВЫ ===
+  // Кнопка БИТВЫ
   const battleBtn = document.getElementById('battle-btn');
   if (battleBtn) {
     battleBtn.addEventListener('click', () => {
@@ -459,11 +402,40 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
   
-  // === DRAG & DROP ===
+  // ТЕСТОВАЯ КНОПКА (только для localhost)
+  const debugBtn = document.getElementById('debug-universe-btn');
+  if (debugBtn && window.location.hostname === 'localhost') {
+    debugBtn.style.display = 'block';
+    debugBtn.addEventListener('click', () => {
+      const state = getState();
+      const freeCells = [];
+      for (let i = 0; i < state.board.length; i++) {
+        if (state.board[i] === null && state.unlockedCells.includes(i)) {
+          freeCells.push(i);
+        }
+      }
+      if (freeCells.length >= 2) {
+        const universe = ALL_ITEMS.find(i => i.id === 14);
+        const satoshi = ALL_ITEMS.find(i => i.id === 15);
+        const newBoard = [...state.board];
+        newBoard[freeCells[0]] = universe;
+        newBoard[freeCells[1]] = satoshi;
+        updateState({ board: newBoard });
+        addXP(1100);
+        updateState({ coins: state.coins + 5000, energy: Math.min(state.energy + 200, MAX_ENERGY) });
+        alert('🌌 ВСЕЛЕННАЯ И САТОШИ СОЗДАНЫ!\n+5000🪙 +200⚡ +1100XP');
+        onUpdate();
+      } else {
+        alert('❌ Нужно 2 свободные ячейки!');
+      }
+    });
+  }
+  
+  // Drag & Drop
   const gridEl = document.getElementById('grid');
   if (gridEl) initDragDrop(gridEl, handleMerge, handleMove);
   
-  // === ПОДСКАЗКИ ДЛЯ ЗАМКОВ ===
+  // Подсказки для замков
   gridEl.addEventListener('click', (e) => {
     const cell = e.target.closest('.cell');
     if (!cell || !cell.dataset.locked) return;
@@ -476,64 +448,6 @@ window.addEventListener('DOMContentLoaded', () => {
     document.body.appendChild(hint);
   });
   
-  // === ОЧИСТКА РЕКОРДОВ ===
-  window.clearAllRecords = () => {
-    if (confirm('Удалить все рекорды?')) { clearRecords(); onUpdate(); }
-  };
-  
-  // Инфо панель (клик для раскрытия)
-const infoPanel = document.getElementById('info-panel');
-if (infoPanel) {
-  infoPanel.addEventListener('click', () => {
-    infoPanel.classList.toggle('open');
-  });
-}
-  // === ТАЙМЕР ВРЕМЕНИ В ИГРЕ (обновление каждую минуту) ===
-  setInterval(() => {
-    updateStatsUI();
-  }, 60000);
-  
+  setInterval(() => updateStatsUI(), 60000);
   console.log('✅ Игра загружена!');
-  // ============= ТЕСТОВАЯ КНОПКА (СОЗДАНИЕ ВСЕЛЕННОЙ) =============
-const debugBtn = document.getElementById('debug-universe-btn');
-if (debugBtn) {
-  debugBtn.addEventListener('click', () => {
-    const state = getState();
-    
-    // Находим две свободные ячейки для Вселенной (14) и Сатоши (15)
-    const freeCells = [];
-    for (let i = 0; i < state.board.length; i++) {
-      if (state.board[i] === null && state.unlockedCells.includes(i)) {
-        freeCells.push(i);
-      }
-    }
-    
-    if (freeCells.length >= 2) {
-      const universe = ALL_ITEMS.find(i => i.id === 14);
-      const satoshi = ALL_ITEMS.find(i => i.id === 15);
-      
-      const newBoard = [...state.board];
-      newBoard[freeCells[0]] = universe;
-      newBoard[freeCells[1]] = satoshi;
-      
-      updateState({ board: newBoard });
-      
-      // Добавляем награду
-      addXP(1100);
-      updateState({
-        coins: state.coins + 5000,
-        energy: Math.min(state.energy + 200, MAX_ENERGY)
-      });
-      
-      alert('🌌 ВСЕЛЕННАЯ И САТОШИ СОЗДАНЫ!\n+5000🪙 +200⚡ +1100XP');
-      onUpdate();
-    } else {
-      alert('❌ Нет свободных ячеек! Продай или объедини предметы.');
-    }
-  });
-}
 });
-
-window.getState = getState;
-window.claimTaskReward = claimTaskReward;
-window.claimAdventReward = claimAdventReward;

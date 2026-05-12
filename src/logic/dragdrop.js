@@ -13,7 +13,6 @@ export const initDragDrop = (gridEl, onMerge, onMove) => {
     const idx = parseInt(cell.dataset.idx);
     const item = state.board[idx];
     
-    // Нельзя перетаскивать заблокированные ячейки
     if (cell.classList.contains('locked-by-battle')) return;
     if (!item || !state.unlockedCells.includes(idx)) return;
 
@@ -24,66 +23,99 @@ export const initDragDrop = (gridEl, onMerge, onMove) => {
     drag.startY = touch ? touch.clientY : e.clientY;
     drag.moved = false;
 
-    // Создаём клон картинки для перетаскивания
+    // СОЗДАЁМ КЛОН (НО ЛЁГКИЙ)
     const clone = document.createElement('img');
     clone.src = '/assets/' + item.img;
     clone.alt = item.name;
     clone.className = 'drag-clone';
-    clone.style.left = drag.startX + 'px';
-    clone.style.top = drag.startY + 'px';
-    clone.style.display = 'block';
-    clone.style.opacity = '0.9';
-    clone.style.width = '60px';
-    clone.style.height = '60px';
-    clone.style.position = 'fixed';
-    clone.style.pointerEvents = 'none';
-    clone.style.zIndex = '1000';
-    clone.style.transform = 'translate(-50%, -50%) scale(1.1)';
-    clone.style.borderRadius = '12px';
-    clone.style.boxShadow = '0 4px 12px rgba(0,0,0,0.4)';
+    
+    // ЛЁГКИЕ CSS-свойства (без box-shadow, без filter)
+    clone.style.cssText = `
+      position: fixed;
+      pointer-events: none;
+      z-index: 9999;
+      width: 60px;
+      height: 60px;
+      left: ${drag.startX - 30}px;
+      top: ${drag.startY - 30}px;
+      opacity: 0.85;
+      transform: scale(1.05);
+      transition: none;
+      will-change: left, top;
+      border-radius: 12px;
+    `;
+    
     document.body.appendChild(clone);
     drag.clone = clone;
 
-    document.addEventListener('pointermove', onPointerMove);
-    document.addEventListener('pointerup', onPointerUp);
+    document.addEventListener('touchmove', onTouchMove, { passive: false });
+    document.addEventListener('touchend', onTouchEnd);
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
     
-    // Легкий хаптик при начале перетаскивания
+    // Лёгкий хаптик
     if (window.Telegram?.WebApp?.HapticFeedback) {
       window.Telegram.WebApp.HapticFeedback.impactOccurred('light');
     }
   };
 
-  const onPointerMove = (e) => {
+  const onTouchMove = (e) => {
     if (!drag.active) return;
-    const touch = e.touches ? e.touches[0] : null;
-    const x = touch ? touch.clientX : e.clientX;
-    const y = touch ? touch.clientY : e.clientY;
+    e.preventDefault();
+    const touch = e.touches[0];
+    const x = touch.clientX;
+    const y = touch.clientY;
     const dist = Math.hypot(x - drag.startX, y - drag.startY);
     
-    if (dist > 10 && !drag.moved) { 
-      drag.moved = true; 
-      if (drag.clone) drag.clone.style.display = 'block'; 
+    if (dist > 10 && !drag.moved) {
+      drag.moved = true;
     }
-    if (drag.moved && drag.clone) { 
-      drag.clone.style.left = x + 'px'; 
-      drag.clone.style.top = y + 'px'; 
+    if (drag.moved && drag.clone) {
+      drag.clone.style.left = (x - 30) + 'px';
+      drag.clone.style.top = (y - 30) + 'px';
     }
   };
 
-  const onPointerUp = (e) => {
+  const onMouseMove = (e) => {
     if (!drag.active) return;
-    document.removeEventListener('pointermove', onPointerMove);
-    document.removeEventListener('pointerup', onPointerUp);
+    const x = e.clientX;
+    const y = e.clientY;
+    const dist = Math.hypot(x - drag.startX, y - drag.startY);
     
-    if (!drag.moved) { 
-      if (drag.clone) drag.clone.remove(); 
-      drag = { active: false, sourceIdx: null, clone: null, startX: 0, startY: 0, moved: false }; 
-      return; 
+    if (dist > 10 && !drag.moved) {
+      drag.moved = true;
+    }
+    if (drag.moved && drag.clone) {
+      drag.clone.style.left = (x - 30) + 'px';
+      drag.clone.style.top = (y - 30) + 'px';
+    }
+  };
+
+  const onTouchEnd = (e) => {
+    if (!drag.active) return;
+    e.preventDefault();
+    finishDrag(e.changedTouches[0]);
+  };
+
+  const onMouseUp = (e) => {
+    if (!drag.active) return;
+    finishDrag(e);
+  };
+
+  const finishDrag = (point) => {
+    document.removeEventListener('touchmove', onTouchMove);
+    document.removeEventListener('touchend', onTouchEnd);
+    document.removeEventListener('mousemove', onMouseMove);
+    document.removeEventListener('mouseup', onMouseUp);
+    
+    if (!drag.moved) {
+      if (drag.clone) drag.clone.remove();
+      drag = { active: false, sourceIdx: null, clone: null, startX: 0, startY: 0, moved: false };
+      return;
     }
 
-    const touch = e.changedTouches ? e.changedTouches[0] : null;
-    const x = touch ? touch.clientX : e.clientX;
-    const y = touch ? touch.clientY : e.clientY;
+    const x = point.clientX;
+    const y = point.clientY;
     
     if (drag.clone) drag.clone.style.display = 'none';
     const el = document.elementFromPoint(x, y);
@@ -110,5 +142,6 @@ export const initDragDrop = (gridEl, onMerge, onMove) => {
     drag = { active: false, sourceIdx: null, clone: null, startX: 0, startY: 0, moved: false };
   };
 
-  gridEl.addEventListener('pointerdown', onPointerDown);
+  gridEl.addEventListener('touchstart', onPointerDown, { passive: false });
+  gridEl.addEventListener('mousedown', onPointerDown);
 };

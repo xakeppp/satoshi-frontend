@@ -119,23 +119,25 @@ export const tryMerge = (src, tgt) => {
 };
 
 // Модальное окно для Сатоши
-function showSatoshiModal() {
+function showSatoshiModal(speedrunResult, coinReward, xpReward, energyReward) {
+  const overlay = document.createElement('div');
+  overlay.className = 'overlay';
+  document.body.appendChild(overlay);
+  
   const modal = document.createElement('div');
-  modal.className = 'speedrun-modal';
+  modal.className = 'unlock-hint';
   modal.innerHTML = `
-    <div class="speedrun-content">
-      <h2>🌌 САТОШИ НАКАМОТО 🌌</h2>
-      <div class="speedrun-time">Поздравляю с созданием Сатоши!</div>
-      <div class="speedrun-bonus">+5000 🪙 +100 ⚡ +1500 XP</div>
-      <button onclick="this.closest('.speedrun-modal').remove()">КРУТО!</button>
-    </div>
+    <h3>🌌 САТОШИ НАКАМОТО</h3>
+    <p>Поздравляю с созданием Вселенной!<br>
+    +${coinReward || 5000} 🪙 +${energyReward || 100} ⚡ +${xpReward || 1500} XP</p>
+    <button onclick="this.closest('.unlock-hint')?.remove(); document.querySelector('.overlay')?.remove()">ХОРОШО</button>
   `;
   document.body.appendChild(modal);
   
-  // Автоматическое закрытие через 3 секунды
   setTimeout(() => {
     if (modal.parentNode) modal.remove();
-  }, 3000);
+    if (overlay.parentNode) overlay.remove();
+  }, 4000);
 }
 
 // Бонусное слияние (для совместимости)
