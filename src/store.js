@@ -2,7 +2,6 @@ import { MAX_ENERGY, START_ENERGY, LOCKED_START, DAILY_TASKS, ADVENT_REWARDS, CE
 
 // Красивое модальное окно для адвента
 function showAdventModal(message) {
-  // Удаляем старое окно, если есть
   const oldModal = document.querySelector('.advent-modal');
   if (oldModal) oldModal.remove();
   const oldOverlay = document.querySelector('.advent-overlay');
@@ -23,6 +22,7 @@ function showAdventModal(message) {
   `;
   document.body.appendChild(modal);
 }
+
 const defaultState = {
   energy: START_ENERGY,
   coins: 1500,
@@ -242,7 +242,13 @@ export const updateTaskProgress = (type, value = 1, targetId = null) => {
           task.progress = task.target;
           changed = true;
         }
-      } else if (!['level', 'coins', 'merge_id', 'unlock'].includes(type)) {
+      } else if (type === 'sell') {
+        const newProg = Math.min(task.progress + value, task.target);
+        if (newProg !== task.progress) {
+          task.progress = newProg;
+          changed = true;
+        }
+      } else {
         const newProg = Math.min(task.progress + value, task.target);
         if (newProg !== task.progress) {
           task.progress = newProg;
@@ -274,7 +280,6 @@ export const claimAdventReward = () => {
   todayStart.setHours(0, 0, 0, 0);
   const todayStartTime = todayStart.getTime();
   
-  // Проверка — получал ли уже сегодня
   if (state.lastAdventClaimTime && state.lastAdventClaimTime >= todayStartTime) {
     const remaining = 24 * 60 * 60 * 1000 - (now - state.lastAdventClaimTime);
     const hours = Math.floor(remaining / (3600000));
@@ -287,21 +292,18 @@ export const claimAdventReward = () => {
   const reward = ADVENT_REWARDS[(state.adventDay - 1) % ADVENT_REWARDS.length];
   if (!reward) return null;
   
-  // Проверка свободных ячеек
   const freeCells = state.board.filter((c, i) => c === null && state.unlockedCells.includes(i)).length;
   const neededCells = (reward.type === 'item' && reward.count) || 
                       (reward.type === 'bonus_item' && 1) || 
                       (reward.type === 'special' && 1) || 0;
   
   if (neededCells > freeCells) {
-  showAdventModal(`❌ Нужно освободить ${neededCells} ячеек!<br>Продай или объедини предметы.`);
-  return null;
+    showAdventModal(`❌ Нужно освободить ${neededCells} ячеек!<br>Продай или объедини предметы.`);
+    return null;
   }
   
-  // Сохраняем время получения
   state.lastAdventClaimTime = now;
   
-  // === ВЫДАЧА НАГРАДЫ ===
   if (reward.type === 'energy') {
     state.energy = Math.min(state.energy + reward.amount, MAX_ENERGY);
   }
@@ -334,7 +336,6 @@ export const claimAdventReward = () => {
     if (free !== -1 && bitcoinItem) state.board[free] = bitcoinItem;
   }
   
-  // Переход к следующему дню (по кругу)
   state.adventDay = (state.adventDay % 7) + 1;
   
   updateTaskProgress('daily_claim');

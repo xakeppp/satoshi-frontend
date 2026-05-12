@@ -634,3 +634,43 @@ body {
   overflow-y: auto;
   flex: 1;
 }
+/* ============= КНОПКИ В ЗАДАНИЯХ (как в контактах) ============= */
+.task-claim-btn {
+  background: rgba(74, 222, 128, 0.2);
+  border: 1px solid rgba(74, 222, 128, 0.4);
+  padding: 6px 14px;
+  border-radius: 30px;
+  font-size: 11px;
+  font-weight: bold;
+  color: #4ade80;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.task-claim-btn:active {
+  transform: scale(0.95);
+  background: rgba(74, 222, 128, 0.4);
+}
+
+.task-claim-btn:disabled {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #888;
+  cursor: not-allowed;
+  transform: none;
+}
+.task-item {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.task-info {
+  flex: 1;
+}
