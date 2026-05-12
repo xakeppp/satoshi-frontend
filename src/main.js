@@ -327,11 +327,16 @@ window.addEventListener('DOMContentLoaded', () => {
   connectBattleWebSocket(handleBattleMessage);
   onUpdate();
   
-  const rulesHeader = document.getElementById('rules-header');
-  if (rulesHeader) {
-    rulesHeader.addEventListener('click', () => {
-      const overlay = document.createElement('div'); overlay.className = 'overlay'; document.body.appendChild(overlay);
-      const modal = document.createElement('div'); modal.className = 'unlock-hint';
+  // ============= КНОПКА ПРАВИЛА =============
+  const rulesBtn = document.getElementById('rules-btn');
+  if (rulesBtn) {
+    rulesBtn.addEventListener('click', () => {
+      const overlay = document.createElement('div');
+      overlay.className = 'overlay';
+      document.body.appendChild(overlay);
+      
+      const modal = document.createElement('div');
+      modal.className = 'unlock-hint';
       modal.innerHTML = `
         <h3>📖 ПРАВИЛА ИГРЫ</h3>
         <p>🔹 <strong>ИГРА:</strong> объединяй одинаковые предметы.<br>
@@ -446,6 +451,7 @@ window.addEventListener('DOMContentLoaded', () => {
   const copyBtcBtn = document.getElementById('copy-btc-btn');
   const tgGroupLink = document.getElementById('tg-group-link');
   const btcAddress = document.getElementById('btc-address');
+  const openTgBtn = document.getElementById('open-tg-btn');
 
   if (copyTgBtn && tgGroupLink) {
     copyTgBtn.addEventListener('click', () => {
@@ -455,24 +461,24 @@ window.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => { copyTgBtn.textContent = '📋 КОПИРОВАТЬ'; }, 2000);
     });
   }
-// === ОТКРЫТИЕ ГРУППЫ В TELEGRAM ===
-const openTgBtn = document.getElementById('open-tg-btn');
-if (openTgBtn) {
-  openTgBtn.addEventListener('click', () => {
-    const tgLink = 'https://t.me/Satoshi_road';
-    if (window.Telegram?.WebApp) {
-      window.Telegram.WebApp.openTelegramLink(tgLink);
-    } else {
-      window.open(tgLink, '_blank');
-    }
-  });
-}
+
   if (copyBtcBtn && btcAddress) {
     copyBtcBtn.addEventListener('click', () => {
       const text = btcAddress.textContent;
       navigator.clipboard.writeText(text);
       copyBtcBtn.textContent = '✅ СКОПИРОВАНО!';
       setTimeout(() => { copyBtcBtn.textContent = '📋 КОПИРОВАТЬ'; }, 2000);
+    });
+  }
+  
+  if (openTgBtn) {
+    openTgBtn.addEventListener('click', () => {
+      const tgLink = 'https://t.me/Satoshi_road';
+      if (window.Telegram?.WebApp) {
+        window.Telegram.WebApp.openTelegramLink(tgLink);
+      } else {
+        window.open(tgLink, '_blank');
+      }
     });
   }
   
