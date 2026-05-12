@@ -1036,3 +1036,79 @@ body.battle-mode-active {
   padding: 4px 12px;
   border-radius: 30px;
 }
+/* ============= КОНТАКТЫ (ВО ВКЛАДКЕ УРОВЕНЬ) ============= */
+.contacts-card {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 24px;
+  margin: 16px;
+  padding: 16px;
+  backdrop-filter: blur(5px);
+}
+
+.contact-title-block {
+  font-size: 16px;
+  font-weight: bold;
+  color: #f7931a;
+  text-align: center;
+  margin-bottom: 16px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 20px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+
+.contact-icon {
+  font-size: 32px;
+  width: 50px;
+  height: 50px;
+  background: rgba(247, 147, 26, 0.15);
+  border-radius: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.contact-info {
+  flex: 1;
+}
+
+.contact-label {
+  font-size: 10px;
+  opacity: 0.6;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+
+.contact-value {
+  font-size: 13px;
+  font-weight: 600;
+  font-family: monospace;
+  word-break: break-all;
+  color: #ffbc42;
+  margin-bottom: 8px;
+}
+
+.contact-btn {
+  background: rgba(74, 222, 128, 0.2);
+  border: 1px solid rgba(74, 222, 128, 0.4);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: bold;
+  color: #4ade80;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.contact-btn:active {
+  transform: scale(0.95);
+  background: rgba(74, 222, 128, 0.4);
+}

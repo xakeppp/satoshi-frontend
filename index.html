@@ -60,8 +60,7 @@
     <button id="battle-btn" class="battle-btn">⚔️ БИТВА НАСМЕРТЬ ⚔️</button>
     <div id="battle-status" class="battle-status"></div>
     
-    <!-- Тестовая кнопка (только для localhost) -->
-    <button id="debug-universe-btn" style="background: linear-gradient(135deg, #8b5cf6, #6d28d9); margin: 5px 16px; padding: 8px; border-radius: 40px; color: white; font-weight: bold; border: none; display: none;">🌌 ТЕСТ: СОЗДАТЬ ВСЕЛЕННУЮ</button>
+    
   </div>
 
   <!-- Вкладка ЗАДАНИЯ -->
@@ -70,16 +69,42 @@
     <div class="task-list"></div>
   </div>
 
-  <!-- Вкладка УРОВЕНЬ -->
-  <div id="level-area" class="tab-content">
-    <div class="tab-header">⭐ ТВОЙ РАНГ</div>
-    <div class="level-card">
-      <div class="level-number" id="lvl-num">1</div>
-      <div class="level-name" id="lvl-name">НОВИЧОК</div>
-      <div class="xp-bar big"><div id="lvl-xp-fill" class="xp-fill" style="width:0%"></div></div>
-      <div class="xp-text" id="lvl-xp-text">0 / 100 XP</div>
+  <!-- Вкладка УРОВЕНЬ + КОНТАКТЫ -->
+<div id="level-area" class="tab-content">
+  <div class="tab-header">⭐ ТВОЙ РАНГ</div>
+  <div class="level-card">
+    <div class="level-number" id="lvl-num">1</div>
+    <div class="level-name" id="lvl-name">НОВИЧОК</div>
+    <div class="xp-bar big"><div id="lvl-xp-fill" class="xp-fill" style="width:0%"></div></div>
+    <div class="xp-text" id="lvl-xp-text">0 / 100 XP</div>
+  </div>
+
+  <!-- БЛОК КОНТАКТОВ И ПОМОЩИ -->
+  <div class="contacts-card">
+    <div class="contact-title-block">📞 ПОМОЩЬ ПУТНИКУ</div>
+    
+    <div class="contact-item">
+  <div class="contact-icon">👥</div>
+  <div class="contact-info">
+    <div class="contact-label">ГРУППА В TELEGRAM</div>
+    <div class="contact-value" id="tg-group-link">@Satoshi_road</div>
+    <div style="display: flex; gap: 8px; margin-top: 6px;">
+      <button class="contact-btn" id="copy-tg-btn">📋 КОПИРОВАТЬ</button>
+      <button class="contact-btn" id="open-tg-btn">🚀 ПЕРЕЙТИ</button>
     </div>
   </div>
+</div>
+
+    <div class="contact-item">
+      <div class="contact-icon">₿</div>
+      <div class="contact-info">
+        <div class="contact-label">BITCOIN АДРЕС</div>
+        <div class="contact-value" id="btc-address">bc1qxy2kgdygjrsqtzq2n0yrf2493p83kkfjhx0wlh</div>
+        <button class="contact-btn" id="copy-btc-btn">📋 КОПИРОВАТЬ</button>
+      </div>
+    </div>
+  </div>
+</div>
 
   <!-- Вкладка РЕКОРДЫ -->
   <div id="leaderboard-area" class="tab-content">

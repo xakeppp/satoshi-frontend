@@ -327,8 +327,7 @@ window.addEventListener('DOMContentLoaded', () => {
   connectBattleWebSocket(handleBattleMessage);
   onUpdate();
   
-  // Правила в верхней панели
-  const rulesHeader = document.getElementById('rules-inline');
+  const rulesHeader = document.getElementById('rules-header');
   if (rulesHeader) {
     rulesHeader.addEventListener('click', () => {
       const overlay = document.createElement('div'); overlay.className = 'overlay'; document.body.appendChild(overlay);
@@ -347,7 +346,6 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
   
-  // Табы
   document.querySelectorAll('.nav-item').forEach(item => {
     item.addEventListener('click', () => {
       const tab = item.dataset.tab;
@@ -364,7 +362,6 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   });
   
-  // Кнопка СОЗДАТЬ
   const createBtn = document.getElementById('create-btn');
   if (createBtn) {
     createBtn.addEventListener('click', () => {
@@ -388,7 +385,6 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
   
-  // Кнопка БИТВЫ
   const battleBtn = document.getElementById('battle-btn');
   if (battleBtn) {
     battleBtn.addEventListener('click', () => {
@@ -402,7 +398,6 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
   
-  // ТЕСТОВАЯ КНОПКА (только для localhost)
   const debugBtn = document.getElementById('debug-universe-btn');
   if (debugBtn && window.location.hostname === 'localhost') {
     debugBtn.style.display = 'block';
@@ -431,11 +426,9 @@ window.addEventListener('DOMContentLoaded', () => {
     });
   }
   
-  // Drag & Drop
   const gridEl = document.getElementById('grid');
   if (gridEl) initDragDrop(gridEl, handleMerge, handleMove);
   
-  // Подсказки для замков
   gridEl.addEventListener('click', (e) => {
     const cell = e.target.closest('.cell');
     if (!cell || !cell.dataset.locked) return;
@@ -447,6 +440,41 @@ window.addEventListener('DOMContentLoaded', () => {
     hint.innerHTML = `<h3>🔒 Ячейка #${idx}</h3><p>${req.text}</p><button onclick="this.closest('.unlock-hint')?.remove(); document.querySelector('.overlay')?.remove()">ПОНЯТНО</button>`;
     document.body.appendChild(hint);
   });
+  
+  // === КОНТАКТЫ: КОПИРОВАНИЕ ===
+  const copyTgBtn = document.getElementById('copy-tg-btn');
+  const copyBtcBtn = document.getElementById('copy-btc-btn');
+  const tgGroupLink = document.getElementById('tg-group-link');
+  const btcAddress = document.getElementById('btc-address');
+
+  if (copyTgBtn && tgGroupLink) {
+    copyTgBtn.addEventListener('click', () => {
+      const text = tgGroupLink.textContent;
+      navigator.clipboard.writeText(text);
+      copyTgBtn.textContent = '✅ СКОПИРОВАНО!';
+      setTimeout(() => { copyTgBtn.textContent = '📋 КОПИРОВАТЬ'; }, 2000);
+    });
+  }
+// === ОТКРЫТИЕ ГРУППЫ В TELEGRAM ===
+const openTgBtn = document.getElementById('open-tg-btn');
+if (openTgBtn) {
+  openTgBtn.addEventListener('click', () => {
+    const tgLink = 'https://t.me/Satoshi_road';
+    if (window.Telegram?.WebApp) {
+      window.Telegram.WebApp.openTelegramLink(tgLink);
+    } else {
+      window.open(tgLink, '_blank');
+    }
+  });
+}
+  if (copyBtcBtn && btcAddress) {
+    copyBtcBtn.addEventListener('click', () => {
+      const text = btcAddress.textContent;
+      navigator.clipboard.writeText(text);
+      copyBtcBtn.textContent = '✅ СКОПИРОВАНО!';
+      setTimeout(() => { copyBtcBtn.textContent = '📋 КОПИРОВАТЬ'; }, 2000);
+    });
+  }
   
   setInterval(() => updateStatsUI(), 60000);
   console.log('✅ Игра загружена!');
