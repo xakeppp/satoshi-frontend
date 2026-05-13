@@ -56,14 +56,14 @@ body {
 }
 
 .duck-placeholder {
-  width: 45px;
-  height: 45px;
+  width: 55px;
+  height: 55px;
   background: linear-gradient(135deg, #f7931a, #ffbc42);
-  border-radius: 12px;
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
+  font-size: 30px;
   flex-shrink: 0;
   overflow: hidden;
 }
@@ -87,6 +87,25 @@ body {
   border-radius: 16px;
   font-size: 9px;
   width: fit-content;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rules-inline {
+  background: rgba(247, 147, 26, 0.3);
+  padding: 2px 8px;
+  border-radius: 16px;
+  font-size: 9px;
+  font-weight: bold;
+  color: #ffbc42;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.rules-inline:active {
+  transform: scale(0.95);
 }
 
 .resources {
@@ -116,25 +135,6 @@ body {
   color: #f7931a;
   font-size: 10px;
   margin-left: 3px;
-}
-
-.rules-btn {
-  background: rgba(247, 147, 26, 0.2);
-  padding: 3px 8px;
-  border-radius: 16px;
-  font-size: 9px;
-  font-weight: bold;
-  color: #ffbc42;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  white-space: nowrap;
-}
-
-.rules-btn:active {
-  transform: scale(0.95);
 }
 
 /* ============= XP СТРОКА + СПИДРАН ============= */
@@ -241,7 +241,7 @@ body {
 /* ============= КНОПКИ ============= */
 .hint-box,
 #sell-panel {
-  min-height: 40px;
+  min-height: 47px;
   margin: 6px 12px;
   padding: 8px 12px;
   border-radius: 30px;
@@ -252,14 +252,13 @@ body {
   flex-wrap: wrap;
   box-sizing: border-box;
   width: calc(100% - 24px);
-  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
 }
 
 .hint-box {
   background: rgba(255, 255, 255, 0.08);
   color: #ffbc42;
-  font-size: 10px;
-  font-weight: 600;
 }
 
 #sell-panel {
@@ -339,6 +338,10 @@ body {
   white-space: nowrap;
 }
 
+#sell-btn:active {
+  transform: scale(0.96);
+}
+
 .create-btn, #create-btn {
   background: linear-gradient(135deg, #f7931a, #ffbc42);
   border: none;
@@ -352,6 +355,11 @@ body {
   text-transform: uppercase;
   width: calc(100% - 24px);
   flex-shrink: 0;
+}
+
+.create-btn:disabled, #create-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .battle-btn, #battle-btn {
@@ -382,7 +390,11 @@ body {
   flex-shrink: 0;
 }
 
-/* ============= ВКЛАДКИ (БЕЗ СКРОЛЛА) ============= */
+.battle-status.active, #battle-status.active {
+  display: block;
+}
+
+/* ============= ВКЛАДКИ ============= */
 .tab-content {
   display: none;
   flex-direction: column;
@@ -441,7 +453,7 @@ body {
   font-size: 18px;
 }
 
-/* ============= ВКЛАДКИ (СТИЛИ ДЛЯ ОСТАЛЬНЫХ) ============= */
+/* ============= ВКЛАДКИ (ОБЩИЕ) ============= */
 .tab-header {
   background: linear-gradient(135deg, #1a3a7a, #0f2a5a);
   margin: 10px 12px;
@@ -453,21 +465,323 @@ body {
   flex-shrink: 0;
 }
 
-.task-list, .leaderboard-list, .stats-grid, .advent-grid {
+/* ============= ЗАДАНИЯ ============= */
+.task-list {
+  margin: 0 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   overflow-y: auto;
-  padding: 0 12px;
   flex: 1;
 }
 
+.task-item {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.task-icon {
+  font-size: 24px;
+}
+
+.task-info {
+  flex: 1;
+}
+
+.task-name {
+  font-weight: bold;
+  font-size: 12px;
+  margin-bottom: 3px;
+}
+
+.task-progress {
+  font-size: 10px;
+  opacity: 0.7;
+  margin-bottom: 4px;
+}
+
+.task-claim-btn {
+  background: rgba(74, 222, 128, 0.2);
+  border: 1px solid rgba(74, 222, 128, 0.4);
+  padding: 5px 12px;
+  border-radius: 25px;
+  font-size: 10px;
+  font-weight: bold;
+  color: #4ade80;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.task-claim-btn:active {
+  transform: scale(0.95);
+  background: rgba(74, 222, 128, 0.4);
+}
+
+.task-claim-btn:disabled {
+  background: #333;
+  border-color: #555;
+  color: #777;
+  cursor: not-allowed;
+}
+
+/* ============= УРОВЕНЬ ============= */
+.level-card {
+  background: rgba(255, 255, 255, 0.05);
+  margin: 16px;
+  padding: 30px 20px;
+  border-radius: 30px;
+  text-align: center;
+}
+
+.level-number {
+  font-size: 64px;
+  font-weight: 900;
+  color: #f7931a;
+  line-height: 1;
+  margin-bottom: 10px;
+}
+
+.level-name {
+  font-size: 24px;
+  font-weight: bold;
+  color: #ffbc42;
+  margin-bottom: 20px;
+}
+
+.xp-bar.big {
+  height: 10px;
+  margin: 15px 0;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.xp-text {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+/* ============= ЛИДЕРБОРД (РЕКОРДЫ) ============= */
 .leaderboard-best {
   text-align: center;
-  font-size: 12px;
-  margin: 6px 12px;
+  font-size: 13px;
+  margin: 8px 12px;
   padding: 8px;
   background: rgba(255, 215, 0, 0.1);
   border-radius: 25px;
   color: #ffd700;
   flex-shrink: 0;
+}
+
+.leaderboard-list {
+  margin: 0 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.leaderboard-empty {
+  text-align: center;
+  padding: 30px;
+  opacity: 0.6;
+  font-size: 12px;
+}
+
+.leaderboard-item {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 8px 12px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.leaderboard-item.first {
+  background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 215, 0, 0.05));
+  border: 1px solid rgba(255, 215, 0, 0.3);
+}
+
+.leaderboard-item.second {
+  background: linear-gradient(135deg, rgba(192, 192, 192, 0.2), rgba(192, 192, 192, 0.05));
+  border: 1px solid rgba(192, 192, 192, 0.3);
+}
+
+.leaderboard-item.third {
+  background: linear-gradient(135deg, rgba(205, 127, 50, 0.2), rgba(205, 127, 50, 0.05));
+  border: 1px solid rgba(205, 127, 50, 0.3);
+}
+
+.leaderboard-item.current-player {
+  background: rgba(74, 222, 128, 0.15);
+  border: 1px solid #4ade80;
+}
+
+.lb-rank {
+  width: 28px;
+  font-weight: bold;
+  color: #f7931a;
+  font-size: 12px;
+}
+
+.lb-name {
+  flex: 2;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lb-time {
+  font-family: monospace;
+  font-size: 11px;
+  font-weight: bold;
+}
+
+.lb-stats {
+  font-size: 10px;
+  opacity: 0.7;
+}
+
+/* ============= СТАТИСТИКА ============= */
+.online-section {
+  background: rgba(255, 255, 255, 0.05);
+  margin: 8px 12px;
+  padding: 8px;
+  border-radius: 12px;
+}
+
+.online-title {
+  font-weight: bold;
+  margin-bottom: 6px;
+  color: #4ade80;
+  font-size: 11px;
+}
+
+.online-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.online-player {
+  background: rgba(74, 222, 128, 0.15);
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.online-player .status {
+  width: 6px;
+  height: 6px;
+  background: #4ade80;
+  border-radius: 50%;
+  animation: pulse 1.5s infinite;
+}
+
+.online-stats {
+  font-size: 9px;
+  opacity: 0.8;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin: 8px 12px;
+}
+
+.stat-card {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 8px;
+  border-radius: 12px;
+  text-align: center;
+}
+
+.stat-value {
+  font-size: 18px;
+  font-weight: bold;
+  color: #f7931a;
+}
+
+.stat-label {
+  font-size: 9px;
+  opacity: 0.7;
+  margin-top: 2px;
+}
+
+/* ============= АДВЕНТ ============= */
+.advent-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin: 12px;
+}
+
+.advent-day {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 8px 4px;
+  text-align: center;
+  cursor: default;
+}
+
+.advent-day.active {
+  background: linear-gradient(135deg, #f7931a, #ffbc42);
+  cursor: pointer;
+  transform: scale(1.02);
+}
+
+.advent-day.collected {
+  background: rgba(74, 222, 128, 0.2);
+  border: 1px solid #4ade80;
+}
+
+.advent-icon {
+  font-size: 24px;
+}
+
+.advent-name {
+  font-size: 9px;
+  font-weight: bold;
+  margin-top: 4px;
+}
+
+.advent-timer-container {
+  background: rgba(255, 255, 255, 0.08);
+  margin: 8px 12px;
+  padding: 8px;
+  border-radius: 25px;
+  text-align: center;
+  font-size: 10px;
+  font-weight: 600;
+  color: #ffbc42;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  flex-shrink: 0;
+}
+
+.advent-timer {
+  font-size: 14px;
+  font-weight: bold;
+  font-family: monospace;
+  color: #4ade80;
+  letter-spacing: 1px;
+  background: rgba(0, 0, 0, 0.3);
+  padding: 3px 10px;
+  border-radius: 25px;
 }
 
 /* ============= КОНТАКТЫ ============= */
@@ -480,12 +794,12 @@ body {
 }
 
 .contact-title-block {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: bold;
   color: #f7931a;
   text-align: center;
-  margin-bottom: 12px;
-  padding-bottom: 6px;
+  margin-bottom: 10px;
+  padding-bottom: 5px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -495,16 +809,16 @@ body {
   gap: 10px;
   background: rgba(0, 0, 0, 0.3);
   border-radius: 16px;
-  padding: 10px;
-  margin-bottom: 10px;
+  padding: 8px;
+  margin-bottom: 8px;
 }
 
 .contact-icon {
-  font-size: 28px;
-  width: 45px;
-  height: 45px;
+  font-size: 24px;
+  width: 40px;
+  height: 40px;
   background: rgba(247, 147, 26, 0.15);
-  border-radius: 22px;
+  border-radius: 20px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -515,52 +829,35 @@ body {
 }
 
 .contact-label {
-  font-size: 9px;
+  font-size: 8px;
   opacity: 0.6;
   letter-spacing: 0.5px;
-  margin-bottom: 3px;
+  margin-bottom: 2px;
 }
 
 .contact-value {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   font-family: monospace;
   word-break: break-all;
   color: #ffbc42;
-  margin-bottom: 6px;
+  margin-bottom: 5px;
 }
 
 .contact-btn {
   background: rgba(74, 222, 128, 0.2);
   border: 1px solid rgba(74, 222, 128, 0.4);
-  padding: 4px 10px;
+  padding: 3px 8px;
   border-radius: 20px;
-  font-size: 9px;
+  font-size: 8px;
   font-weight: bold;
   color: #4ade80;
   cursor: pointer;
   transition: all 0.2s;
 }
 
-/* ============= АДВЕНТ ТАЙМЕР ============= */
-.advent-timer-container {
-  background: rgba(255, 255, 255, 0.08);
-  margin: 8px 12px;
-  padding: 8px;
-  border-radius: 25px;
-  text-align: center;
-  font-size: 10px;
-  font-weight: 600;
-  color: #ffbc42;
-  flex-shrink: 0;
-}
-
-.advent-timer {
-  font-size: 16px;
-  font-weight: bold;
-  font-family: monospace;
-  color: #4ade80;
-  letter-spacing: 2px;
+.contact-btn:active {
+  transform: scale(0.95);
 }
 
 /* ============= МОДАЛЬНЫЕ ОКНА ============= */
@@ -611,7 +908,75 @@ body {
   color: #1a1a2e;
 }
 
-/* ============= ДРУГОЕ ============= */
+.reward-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 2500;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.reward-content {
+  background: linear-gradient(135deg, #1e3c72, #0f2a5a);
+  padding: 25px;
+  border-radius: 25px;
+  text-align: center;
+  max-width: 260px;
+  border: 2px solid #4ade80;
+}
+
+.reward-content h2 {
+  color: #4ade80;
+  margin-bottom: 12px;
+  font-size: 18px;
+}
+
+.reward-line {
+  font-size: 18px;
+  font-weight: bold;
+  margin: 6px 0;
+  color: white;
+}
+
+.reward-content button {
+  background: #4ade80;
+  border: none;
+  padding: 8px 20px;
+  border-radius: 25px;
+  font-weight: bold;
+  color: #000;
+  margin-top: 12px;
+  cursor: pointer;
+}
+
+.advent-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 2001;
+}
+
+.advent-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 2000;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
 .drag-clone {
   position: fixed;
   pointer-events: none;
@@ -624,53 +989,31 @@ body {
   transform: translateZ(0);
   backface-visibility: hidden;
 }
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
+.league-badge {
+  background: rgba(0, 0, 0, 0.4);
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 10px;
+  width: fit-content;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
-.scrollable {
-  overflow-y: auto;
-  flex: 1;
-}
-/* ============= КНОПКИ В ЗАДАНИЯХ (как в контактах) ============= */
-.task-claim-btn {
-  background: rgba(74, 222, 128, 0.2);
-  border: 1px solid rgba(74, 222, 128, 0.4);
-  padding: 6px 14px;
-  border-radius: 30px;
-  font-size: 11px;
+.rules-btn {
+  background: rgba(247, 147, 26, 0.3);
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 10px;
   font-weight: bold;
-  color: #4ade80;
+  color: #ffbc42;
   cursor: pointer;
   transition: all 0.2s;
   white-space: nowrap;
-  flex-shrink: 0;
 }
 
-.task-claim-btn:active {
+.rules-btn:active {
   transform: scale(0.95);
-  background: rgba(74, 222, 128, 0.4);
-}
-
-.task-claim-btn:disabled {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
-  color: #888;
-  cursor: not-allowed;
-  transform: none;
-}
-.task-item {
-  background: rgba(255, 255, 255, 0.05);
-  border-radius: 20px;
-  padding: 12px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-}
-
-.task-info {
-  flex: 1;
 }
